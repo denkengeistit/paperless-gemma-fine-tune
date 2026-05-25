@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  pipeline:
+    build:
+      context: ./pipeline
+      dockerfile: Dockerfile.pipeline
+    container_name: paperless-fine-tune-pipeline
+    volumes:
+      - ./pipeline/data:/app/data
+    environment:
+      # --- Connection to Paperless-ngx ---
+      # If Paperless is in the same docker-compose stack, use its service container name (e.g., http://webserver:8000)
+      # Otherwise, use its external VPS/IP URL.
+      - PAPERLESS_URL=http://webserver:8000
+      - PAPERLESS_TOKEN=your_paperless_api_token_here
+
+      # --- Connection to AnythingLLM (useanything.com cloud) ---
+      - ANYTHINGLLM_URL=https://useanything.com/api/v1
+      - ANYTHINGLLM_KEY=your_anythingllm_api_key_here
+      - WORKSPACE_SLUG=your_workspace_slug_here
+
+      # --- Connection to OpenRouter (Gemini 3.5 API) ---
+      - OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+      # --- Google Cloud Storage (GCS) Auto-Upload ---
+      # Input your bucket name and desired output dataset folder path
+      - GCS_BUCKET_NAME=your_gcs_bucket_name_here
+      - GCS_BLOB_PATH=datasets/dataset_gold_standards.jsonl
+    
+    # Restarts if it crashes, but ensures it can be stopped manually
+    restart: unless-stopped
+    
+    # Ensures the pipeline runs in the same network namespace as your Paperless-ngx stack.
+    # Replace 'default' with your actual compose network if you use custom networking.
+    networks:
+      - default
+
+# Uncomment and adjust if your paperless compose file uses a custom network
+# networks:
+#   default:
+#     external: true
+#     name: paperless_default

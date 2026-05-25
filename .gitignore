@@ -1,0 +1,29 @@
+# Python bytecode & cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Local databases and persistence
+pipeline/data/
+*.db
+*.db-journal
+
+# Local generated datasets
+*.jsonl
+
+# Local environment secrets
+.env
+.env.*
+
+# OS-specific files
+.DS_Store
+Thumbs.db

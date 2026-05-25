@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+# Set working directory inside container
+WORKDIR /app
+
+# Install system dependencies (SQLite is built-in, but adding curl/sqlite3 for utilities)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    sqlite3 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first to leverage Docker layer caching
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
+COPY main.py .
+
+# Create the data mount point for SQLite persistence
+RUN mkdir -p /app/data
+
+# Run the main pipeline processor
+CMD ["python", "main.py"]

@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # --- Redis task broker for Paperless-ngx ---
+  redis:
+    image: docker.io/library/redis:7
+    container_name: local-test-redis
+    restart: unless-stopped
+    networks:
+      - sandbox-network
+
+  # --- Paperless-ngx Document Management System (SQLite Backend) ---
+  paperless-webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: local-test-paperless-webserver
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - "8010:8000" # Exposes Paperless-ngx on local port 8010 (http://localhost:8010)
+    volumes:
+      - ./local-test-data/paperless/data:/usr/src/paperless/data
+      - ./local-test-data/paperless/media:/usr/src/paperless/media
+      - ./local-test-data/paperless/consume:/usr/src/paperless/consume
+      - ./local-test-data/paperless/export:/usr/src/paperless/export
+    environment:
+      - USER_ID=1000
+      - GROUP_ID=1000
+      - PAPERLESS_REDIS=redis://redis:6379
+      - PAPERLESS_TIME_ZONE=America/New_York
+      - PAPERLESS_OCR_LANGUAGE=eng
+      - PAPERLESS_URL=http://paperless-webserver:8000
+      # Automatic admin credentials for immediate local login
+      - PAPERLESS_ADMIN_USER=admin
+      - PAPERLESS_ADMIN_PASSWORD=admin
+    networks:
+      - sandbox-network
+
+  # --- AnythingLLM (Local Desktop/Web RAG Workspace) ---
+  anythingllm:
+    image: mintplexlabs/anythingllm:latest
+    container_name: local-test-anythingllm
+    restart: unless-stopped
+    ports:
+      - "3001:3001" # Exposes AnythingLLM on local port 3001 (http://localhost:3001)
+    volumes:
+      - ./local-test-data/anythingllm:/app/storage
+    environment:
+      - STORAGE_DIR=/app/storage
+    networks:
+      - sandbox-network
+
+  # --- IBM Docling (Advanced Document Parser/OCR API Server) ---
+  docling:
+    image: quay.io/docling-project/docling-serve:latest
+    container_name: local-test-docling
+    restart: unless-stopped
+    ports:
+      - "5001:5001" # Exposes Docling UI & OpenAPI docs on local port 5001 (http://localhost:5001)
+    environment:
+      - DOCLING_SERVE_ENABLE_UI=true # Enables Swagger UI on /docs and general interface on /ui
+    networks:
+      - sandbox-network
+
+  # --- Our Automatic Fine-Tuning Multi-Agent Pipeline ---
+  pipeline:
+    build:
+      context: ./pipeline
+      dockerfile: Dockerfile.pipeline
+    container_name: local-test-pipeline
+    restart: unless-stopped
+    depends_on:
+      - paperless-webserver
+      - anythingllm
+      - docling
+    volumes:
+      - ./pipeline/data:/app/data
+    environment:
+      # --- Connection to Local Paperless-ngx ---
+      # Resolves Paperless-ngx internally on the Docker network
+      - PAPERLESS_URL=http://paperless-webserver:8000
+      - PAPERLESS_TOKEN=your_test_paperless_api_token_here # Log in to http://localhost:8010 (admin/admin) to generate your API token
+
+      # --- Connection to Local AnythingLLM ---
+      # Resolves AnythingLLM internally on the Docker network
+      - ANYTHINGLLM_URL=http://anythingllm:3001/api/v1
+      - ANYTHINGLLM_KEY=your_local_anythingllm_api_key_here # Generate in AnythingLLM settings -> API Keys
+      - WORKSPACE_SLUG=your_test_workspace_slug_here        # Create a workspace and use its slug
+
+      # --- Connection to OpenRouter (Gemini 3.5 API) ---
+      - OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+      # --- Google Cloud Storage (GCS) Auto-Upload ---
+      # (Optional for local test; leave blank or fill out if local gcloud auth is configured)
+      - GCS_BUCKET_NAME=your_gcs_bucket_name_here
+      - GCS_BLOB_PATH=datasets/dataset_gold_standards.jsonl
+    networks:
+      - sandbox-network
+
+networks:
+  sandbox-network:
+    name: local_sandbox_network
+    driver: bridge

@@ -34,6 +34,44 @@ graph TD
 *   **Agent 3 (The Professor)**: Chief quality auditor; reviews dialogue turns, scores them, and injects dynamic system prompt modifications directly back into the Teacher's state.
 *   **Agent 4 (The Scribe)**: Downstream compiler; harvests approved conversations (Professor score $\ge$ 4.0/5.0), formats them into standard ChatML JSONL, and uploads them to a GCS bucket.
 
+## 🧪 Local Testing & Sandboxing (All-in-One Sandbox)
+
+Before deploying to your live GCP VM instance, you can spin up a fully self-contained local testing sandbox containing **Paperless-ngx** (preconfigured with `admin`/`admin` credentials), **AnythingLLM**, **IBM Docling**, and our **Triumvirate Pipeline** container all in one.
+
+### 1. Launch the Sandbox
+On your local machine (e.g., your Mac Mini), clone this repository and spin up the complete test environment:
+```bash
+git clone https://github.com/denkengeistit/paperless-gemma-fine-tune.git
+cd paperless-gemma-fine-tune
+
+# Launch all 5 containers (Redis, Paperless, AnythingLLM, Docling, and Pipeline)
+docker compose -f docker-compose.local-test.yml up -d --build
+```
+
+### 2. Configure the Local Services
+Once the containers are running, access and configure them:
+*   **Paperless-ngx**: Available at [http://localhost:8010](http://localhost:8010). Log in with credentials `admin` / `admin`, go to settings, and generate an API Token.
+*   **AnythingLLM**: Available at [http://localhost:3001](http://localhost:3001). Complete the brief initial setup, generate an API key in the settings tab, and create your test workspace.
+*   **IBM Docling API**: Running at [http://localhost:5001](http://localhost:5001). You can view the interactive OpenAPI documentation at `/docs` and the web UI parser playground at `/ui`.
+
+### 3. Bind the Pipeline & Run
+Open `docker-compose.local-test.yml` and update the `pipeline` environment variables with your generated test keys:
+```yaml
+    environment:
+      - PAPERLESS_TOKEN=your_test_paperless_api_token_here
+      - ANYTHINGLLM_KEY=your_local_anythingllm_api_key_here
+      - WORKSPACE_SLUG=your_test_workspace_slug_here
+      - OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+Restart the pipeline daemon to begin the automated ingestion and learning triumvirate loop:
+```bash
+# Restart pipeline with active credentials
+docker compose -f docker-compose.local-test.yml restart pipeline
+
+# Monitor active student-teacher dialogues
+docker compose -f docker-compose.local-test.yml logs -f pipeline
+```
+
 ---
 
 ## 🚀 Step 1: Deploy Ingestion on your GCP Compute VM

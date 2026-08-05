@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "title": "Updated Test Doc",
+    "quality_score": 1.0,
+    "needs_reocr": false,
+    "training_data_suitable": true,
+    "issues": []
+  }
+]

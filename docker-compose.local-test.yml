@@ -77,21 +77,21 @@ services:
       # --- Connection to Local Paperless-ngx ---
       # Resolves Paperless-ngx internally on the Docker network
       - PAPERLESS_URL=http://paperless-webserver:8000
-      - PAPERLESS_TOKEN=your_test_paperless_api_token_here # Log in to http://localhost:8010 (admin/admin) to generate your API token
+      - PAPERLESS_TOKEN=100369912943b8cf927a139e6fc9c6432b7a101f # Log in to http://localhost:8010 (admin/admin) to generate your API token
 
       # --- Connection to Local AnythingLLM ---
       # Resolves AnythingLLM internally on the Docker network
       - ANYTHINGLLM_URL=http://anythingllm:3001/api/v1
-      - ANYTHINGLLM_KEY=your_local_anythingllm_api_key_here # Generate in AnythingLLM settings -> API Keys
-      - WORKSPACE_SLUG=your_test_workspace_slug_here        # Create a workspace and use its slug
+      - ANYTHINGLLM_KEY=8BCF3Y5-TMEM5H3-P4C0PVG-123XE34 # Generate in AnythingLLM settings -> API Keys
+      - WORKSPACE_SLUG=myworkspace       # Create a workspace and use its slug
 
       # --- Connection to OpenRouter (Gemini 3.5 API) ---
       - OPENROUTER_API_KEY=your_openrouter_api_key_here
 
       # --- Google Cloud Storage (GCS) Auto-Upload ---
       # (Optional for local test; leave blank or fill out if local gcloud auth is configured)
-      - GCS_BUCKET_NAME=your_gcs_bucket_name_here
-      - GCS_BLOB_PATH=datasets/dataset_gold_standards.jsonl
+      #- GCS_BUCKET_NAME=your_gcs_bucket_name_here
+      #- GCS_BLOB_PATH=datasets/dataset_gold_standards.jsonl
     networks:
       - sandbox-network
 

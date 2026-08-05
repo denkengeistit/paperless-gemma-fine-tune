@@ -291,6 +291,17 @@ class QualityAssessmentClient:
         # Check for table-like structure
         has_tables = bool(re.search(r'^[\s\S]*\|[\s\S]*$', content, re.MULTILINE))
 
+        return {
+            'quality_score': max(0.0, min(1.0, quality_score)),
+            'readability': 'low' if len(issues) > 2 else 'medium' if issues else 'high',
+            'garbage_content_ratio': weird_char_ratio,
+            'table_structure_preserved': has_tables,
+            'heading_structure_preserved': bool(re.search(r'^#{1,6}\s', content, re.MULTILINE)),
+            'needs_reocr': quality_score < REOCR_THRESHOLD,
+            'issues': issues,
+            'training_data_suitable': quality_score >= QUALITY_THRESHOLD and weird_char_ratio < GARBAGE_RATIO_THRESHOLD
+        }
+
 
 def assess_all_documents(paperless: PaperlessClient, gemma: QualityAssessmentClient,
                          output_path: str, scan_only: bool = False) -> List[Dict]:

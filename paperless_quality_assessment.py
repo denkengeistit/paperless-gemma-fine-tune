@@ -59,7 +59,9 @@ PAPERLESS_DOCKER_URL = os.getenv('PAPERLESS_DOCKER_URL', 'http://paperless-webse
 
 # Mac Mini LM Studio endpoint (Tailscale address)
 MAC_MINI_LM_STUDIO = os.getenv('MAC_MINI_LM_STUDIO', 'http://100.119.61.113:1234/v1')
-GEMMA_MODEL = os.getenv('GEMMA_MODEL', 'gemma-2-9b-it')
+# No hardcoded default: this must match the model identifier of whatever model is
+# currently loaded in LM Studio (see GET {MAC_MINI_LM_STUDIO}/models).
+GEMMA_MODEL = os.getenv('GEMMA_MODEL', '')
 
 # Quality assessment prompt template
 QUALITY_ASSESSMENT_PROMPT = """Analyze this document content for OCR quality and training data suitability.
@@ -426,6 +428,14 @@ def main():
     parser.add_argument('--scan', action='store_true',
                         help='Scan without updating Paperless')
     args = parser.parse_args()
+
+    if not GEMMA_MODEL:
+        logger.error(
+            "GEMMA_MODEL is not set. Set it to the identifier of the model loaded in "
+            "LM Studio (see GET %s/models) via env var or .env file.",
+            MAC_MINI_LM_STUDIO,
+        )
+        sys.exit(1)
 
     logger.info("=" * 70)
     logger.info("Paperless Document Quality Assessment Pipeline")

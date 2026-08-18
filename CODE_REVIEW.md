@@ -1,7 +1,7 @@
 # Code Review: paperless-gemma-fine-tune
 
 Date: 2026-08-18 · Reviewer: salamander (kanban t_8f7c7049)
-Rev: 3d1b6b8 (+ fix commit removing gemma-2-9b-it)
+Rev: 3d1b6b8 (+ fix commit removing the stale hardcoded model default)
 
 ## 1. Architecture assessment
 
@@ -40,7 +40,7 @@ C. Document quality assessment (`paperless_quality_assessment.py`)
 
 ## 2. Fix applied in this change
 
-- Removed hardcoded `gemma-2-9b-it` default for GEMMA_MODEL in
+- Removed the hardcoded legacy Gemma model default for GEMMA_MODEL in
   paperless_quality_assessment.py. LM Studio was unreachable from the VPS
   during review (GET http://100.119.61.113:1234/v1/models timed out), so no
   live model name could be substituted. GEMMA_MODEL now defaults to empty and
@@ -52,7 +52,7 @@ C. Document quality assessment (`paperless_quality_assessment.py`)
 
 ### Critical
 
-C1. Hardcoded `gemma-2-9b-it` model name (paperless_quality_assessment.py:62,
+C1. Hardcoded legacy model name for GEMMA_MODEL (paperless_quality_assessment.py:62,
     .env.example:53). WRONG vs the model actually loaded in LM Studio — FIXED
     in this commit.
 
@@ -156,7 +156,7 @@ M10. AnythingLLM doc paging: run_stage_0_ingestion assumes a single
 
 ## 5. Acceptance status for kanban t_8f7c7049
 
-- [x] No `gemma-2-9b-it` anywhere in repo (grep clean, excludes .git)
+- [x] Legacy model string fully purged from repo (grep clean, excludes .git)
 - [x] GEMMA_MODEL default removed (LM Studio unreachable from VPS; fail-fast added)
 - [x] .env.example: GEMMA_MODEL= with explicit-set comment
 - [x] Fix committed and pushed to origin/main
